@@ -1,16 +1,18 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
+import jwt from "jsonwebtoken";
 
 export function middleware(request: NextRequest) {
-  const isDashboardRoute = request.nextUrl.pathname.startsWith("/dashboard");
-
-  const isAuthenticated = false;
-
-  if (isDashboardRoute && !isAuthenticated) {
-    const loginUrl = new URL("/", request.url);
-    return NextResponse.redirect(loginUrl);
+  const token = request.cookies.get("token")?.value;
+  if (!token) {
+    return NextResponse.redirect(new URL("/", request.url));
   }
-  return NextResponse.next();
+  try {
+    jwt.verify(token, process.env.JWT_SECRET!);
+    return NextResponse.next();
+  } catch {
+    return NextResponse.redirect(new URL("/", request.url));
+  }
 }
 
 export const config = {
